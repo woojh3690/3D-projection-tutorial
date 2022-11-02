@@ -12,9 +12,12 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 scale = 100
 
-circle_pos = [WIDTH/2, HEIGHT/2]  # x, y
+middle_pos = [WIDTH/2, HEIGHT/2]  # x, y
 
-angle = 0
+angle_x = 0
+angle_y = 0
+angle_z = 0
+angle_change_speed = 0.01
 
 points = []
 
@@ -59,44 +62,55 @@ while True:
                 pygame.quit()
                 exit()
 
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        angle_y += angle_change_speed
+    if keys[pygame.K_RIGHT]:
+        angle_y -= angle_change_speed
+    if keys[pygame.K_DOWN]:
+        angle_x += angle_change_speed
+    if keys[pygame.K_UP]:
+        angle_x -= angle_change_speed
+    if keys[pygame.K_f]:
+        angle_z += angle_change_speed
+    if keys[pygame.K_d]:
+        angle_z -= angle_change_speed
+
     # update stuff
 
     rotation_z = np.matrix([
-        [cos(angle), -sin(angle), 0],
-        [sin(angle), cos(angle), 0],
+        [cos(angle_z), -sin(angle_z), 0],
+        [sin(angle_z), cos(angle_z), 0],
         [0, 0, 1],
     ])
 
     rotation_y = np.matrix([
-        [cos(angle), 0, sin(angle)],
+        [cos(angle_y), 0, sin(angle_y)],
         [0, 1, 0],
-        [-sin(angle), 0, cos(angle)],
+        [-sin(angle_y), 0, cos(angle_y)],
     ])
 
     rotation_x = np.matrix([
         [1, 0, 0],
-        [0, cos(angle), -sin(angle)],
-        [0, sin(angle), cos(angle)],
+        [0, cos(angle_x), -sin(angle_x)],
+        [0, sin(angle_x), cos(angle_x)],
     ])
-    angle += 0.01
 
     screen.fill(WHITE)
     # drawining stuff
 
-    i = 0
-    for point in points:
+    for i, point in enumerate(points):
         rotated2d = np.dot(rotation_z, point.reshape((3, 1)))
         rotated2d = np.dot(rotation_y, rotated2d)
         rotated2d = np.dot(rotation_x, rotated2d)
 
         projected2d = np.dot(projection_matrix, rotated2d)
 
-        x = int(projected2d[0][0] * scale) + circle_pos[0]
-        y = int(projected2d[1][0] * scale) + circle_pos[1]
+        x = int(projected2d[0][0] * scale) + middle_pos[0]
+        y = int(projected2d[1][0] * scale) + middle_pos[1]
 
         projected_points[i] = [x, y]
         pygame.draw.circle(screen, RED, (x, y), 5)
-        i += 1
 
     for p in range(4):
         connect_points(p, (p+1) % 4, projected_points)
